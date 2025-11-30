@@ -1,26 +1,26 @@
 on:
-	pull_request:
-		types:	[opened, synchronize]
-		branches:
-			- main
+  pull_request:
+    types:	[opened, synchronize]
+    branches:
+      - main
 
 jobs:
-	build:
-		runs-on: ubuntu-latest
-		container: eclipse-temurin:21-jdk
+  build:
+    runs-on: ubuntu-latest
+    container: eclipse-temurin:21-jdk
 
-		steps:
-			-name: Clone repository
-			 uses: actions/checkout@v4
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
 
-			-name: Grant permissions to mvnw script
-			 run: chmod u+x ./mvnw
+      - name: Grant permissions to mvnw script
+        run: chmod u+x ./mvnw
 
-			-name: Run mvnw script
-			 run: ./mvnw package
-
-			-name: Save artifacts
-			 uses: actions/upload-artifact@v4
-			 with:
-				name: rbpo_1
-				path: ./target/*.jar
+      - name: Run mvnw script
+        run: ./mvnw package
+ 
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rbpo_1
+          path: ./target/*.jar
