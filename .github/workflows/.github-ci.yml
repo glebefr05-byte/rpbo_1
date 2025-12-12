@@ -24,32 +24,61 @@ jobs:
 				name: rbpo_1
 				path: ./target/rpbo_1-0.0.1-SNAPSHOT.jar
 
-   sast-task:
-     name: SAST task
+#   sast-task:
+#     name: SAST task
+#     needs: build
+#     runs-on: ubuntu-latest
+#     container:
+#       image: returntocorp/semgrep:latest
+#    
+#     steps:
+#     - name: Clone repository
+#       uses: actions/checkout@v4
+#  
+#     - name: Make directory
+#       run: mkdir -p reports
+#
+#     - name: Run Semgrep Scan
+#       run: |
+#         semgrep scan \
+#           --config "p/java" \
+#           --config "p/secrets" \
+#           --config "p/owasp-top-ten" \
+#           --sarif \
+#           --output reports/semgrep-results.sarif || true
+#
+#     - name: Save reports
+#       uses: github/codeql-action/upload-sarif@v4
+#       with:
+#         name: reports-semgrep
+#         sarif_file: reports/semgrep-results.sarif
+#         retention-days: 14
+
+   dependency_check:
+     name: SCA Task
      needs: build
      runs-on: ubuntu-latest
-     container:
-       image: returntocorp/semgrep:latest
-    
+     container: eclipse-temurin:21-jdk
      steps:
      - name: Clone repository
        uses: actions/checkout@v4
-   
+
      - name: Make directory
        run: mkdir -p reports
 
-     - name: Run Semgrep Scan
+     - name: Grant permissions to mvnw script
+       run: chmod +x ./mvnw
+
+     - name: Run OWASP Dependency-Check
        run: |
-         semgrep scan \
-           --config "p/java" \
-           --config "p/secrets" \
-           --config "p/owasp-top-ten" \
-           --sarif \
-           --output reports/semgrep-results.sarif || true
+         mvn org.owasp:dependency-check-maven:check \
+         -Dformat=HTML \
+         -DoutputDirectory=reports \
+         -DsuppressionFile=suppressions.xml || true
 
      - name: Save reports
-       uses: github/codeql-action/upload-sarif@v4
+       uses: actions/upload-artifact@v4
        with:
-         name: reports-semgrep
-         sarif_file: reports/semgrep-results.sarif
+         name: reports-owasp
+         path: target/dependency-check-report.html
          retention-days: 14
