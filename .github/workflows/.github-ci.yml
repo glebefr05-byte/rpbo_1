@@ -22,7 +22,7 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                  name: rbpo_1
-                 path: ./target/rpbo_1-0.0.1-SNAPSHOT.jar
+                 path: ./target/*.jar
 
     sast-task:
       name: SAST task
