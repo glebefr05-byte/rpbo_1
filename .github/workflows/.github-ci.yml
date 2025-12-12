@@ -54,7 +54,7 @@ jobs:
                  sarif_file: reports/semgrep-results.sarif
                  retention-days: 14
 
-         dependency_check:
+    sca_task:
              name: SCA Task
              needs: build
              runs-on: ubuntu-latest
