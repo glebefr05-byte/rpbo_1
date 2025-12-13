@@ -44,8 +44,8 @@ jobs:
                    --config "p/java" \
                    --config "p/secrets" \
                    --config "p/owasp-top-ten" \
-                   --sarif \
-                   --output reports/semgrep-results.sarif || true
+                   --output reports/semgrep-results.sarif \
+                   --sarif || true
 
              - name: Save SARIF
                uses: github/codeql-action/upload-sarif@v4
