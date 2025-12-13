@@ -47,10 +47,17 @@ jobs:
                    --sarif \
                    --output reports/semgrep-results.sarif || true
 
-             - name: Save reports
+             - name: Save SARIF
                uses: github/codeql-action/upload-sarif@v4
                with:
                  sarif_file: reports/semgrep-results.sarif
+
+             - name: Save results
+               uses: actions/upload-artifact@v4
+               with:
+                 name: semgrep-results
+                 path: reports/semgrep-results.sarif
+                 retention-days: 14
 
     sca_task:
              name: SCA Task
@@ -78,5 +85,5 @@ jobs:
                uses: actions/upload-artifact@v4
                with:
                  name: reports-owasp
-                 path: target/dependency-check-report.html
+                 path: reports/dependency-check-report.html
                  retention-days: 14
