@@ -25,29 +25,36 @@ jobs:
                  path: ./target/*.jar
 
     sast-task:
-      name: SAST task
-      needs: build
-      runs-on: ubuntu-latest
-      container:
-        image: returntocorp/semgrep:latest
+             name: SAST task
+             needs: build
+             runs-on: ubuntu-latest
+             container:
+               image: returntocorp/semgrep:latest
     
-      steps:
-          - name: Clone repository
-            uses: actions/checkout@v4
-   
-          - name: Make directory
-            run: mkdir -p reports
+             steps:
+             - name: Clone repository
+               uses: actions/checkout@v4
+          
+             - name: Make directory
+               run: mkdir -p reports
 
-          - name: Run Semgrep Scan
-            run: |
-                semgrep scan \
-                --config "p/java" \
-                --config "p/secrets" \
-                --config "p/owasp-top-ten" \
-                --sarif \
-                --output reports/semgrep-results.sarif || true
+             - name: Run Semgrep Scan
+               run: |
+                 semgrep scan \
+                   --config "p/java" \
+                   --config "p/secrets" \
+                   --config "p/owasp-top-ten" \
+                   --output reports/semgrep-results.sarif \
+                   --sarif || true
 
-          - name: Save reports
-            uses: github/codeql-action/upload-sarif@v4
-            with:
-               sarif_file: reports/semgrep-results.sarif
+             - name: Save SARIF
+               uses: github/codeql-action/upload-sarif@v4
+               with:
+                 sarif_file: reports/semgrep-results.sarif
+
+             - name: Save results
+               uses: actions/upload-artifact@v4
+               with:
+                 name: semgrep-results
+                 path: reports/semgrep-results.sarif
+                 retention-days: 14
