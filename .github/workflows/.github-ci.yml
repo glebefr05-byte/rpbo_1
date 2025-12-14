@@ -115,11 +115,10 @@ jobs:
         - name: Download app
           uses: actions/download-artifact@v4
           with:
-            name: rbpo_1
             path: target/
 
         - name: Run application
-          run: java -jar ./target/rbpo_1-0.0.1-SNAPSHOT.jar &
+          run: java -jar ./course-management-0.0.1-SNAPSHOT.jar &
       
         - name: Wait for application to start
           run: sleep 30
@@ -139,7 +138,7 @@ jobs:
 
 
     zap-api_scan:
-        name: ZAP API Analysis
+        name: ZAP API task
         needs: build
         runs-on: ubuntu-latest
         container:
@@ -165,11 +164,10 @@ jobs:
         - name: Download app
           uses: actions/download-artifact@v4
           with:
-            name: rbpo_1
             path: target/
 
         - name: Run application
-          run: java -jar ./target/rbpo_1-0.0.1-SNAPSHOT.jar &
+          run: java -jar ./course-management-0.0.1-SNAPSHOT.jar &
       
         - name: Wait for application to start
           run: sleep 30
