@@ -131,12 +131,13 @@ jobs:
               rules_file_name: 'zap_rules.tsv'
               allow_issue_writing: false
               fail_action: false
+              artifact_name: zap_baseline_scan
     
         - name: Upload ZAP Results
           if: always()
           uses: actions/upload-artifact@v4
           with:
-              name: zap-results
+              name: zap-baseline_results
               path: |
                 zap-*
                 *.html
@@ -184,12 +185,13 @@ jobs:
               format: openapi
               target: 'http://localhost:8080'
               rules_file_name: 'zap_rules.tsv'
+              artifact_name: zap_api_scan
 
         - name: Upload ZAP Results
           if: always()
           uses: actions/upload-artifact@v4
           with:
-              name: zap-results
+              name: zap-api_results
               path: |
                 zap-*
                 *.html
