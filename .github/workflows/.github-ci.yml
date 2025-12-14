@@ -1,165 +1,188 @@
 on:
-	pull_request:
-		types:	[opened, synchronize]
-		branches: [ main ]
+    pull_request:
+        types:    [opened, synchronize]
+        branches: [ main ]
 
 jobs:
-	build:
-		runs-on: ubuntu-latest
-		container: eclipse-temurin:21-jdk
+    build:
+        runs-on: ubuntu-latest
+        container: eclipse-temurin:21-jdk
 
-		steps:
-			-name: Clone repository
-			 uses: actions/checkout@v4
+        steps:
+            - name: Clone repository
+              uses: actions/checkout@v4
 
-			-name: Grant permissions to mvnw script
-			 run: chmod u+x./mvnw
+            - name: Grant permissions to mvnw script
+              run: chmod u+x ./mvnw
 
-			-name: Run mvnw script
-			 run: ./mvnw package
+            - name: Run mvnw script
+              run: ./mvnw package
 
-			-name: Save artifacts
-			 uses: actions/upload-artifact@v4
-			 with:
-				name: rbpo_1
-				path: ./target/rpbo_1-0.0.1-SNAPSHOT.jar
+            - name: Save artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                 name: rbpo_1
+                 path: ./target/*.jar
 
-#   sast-task:
-#     name: SAST task
-#     needs: build
-#     runs-on: ubuntu-latest
-#     container:
-#       image: returntocorp/semgrep:latest
+#    sast-task:
+#             name: SAST task
+#             needs: build
+#             runs-on: ubuntu-latest
+#             container:
+#               image: returntocorp/semgrep:latest
 #    
-#     steps:
-#     - name: Clone repository
-#       uses: actions/checkout@v4
-#  
-#     - name: Make directory
-#       run: mkdir -p reports
+#             steps:
+#             - name: Clone repository
+#               uses: actions/checkout@v4
+#          
+#             - name: Make directory
+#               run: mkdir -p reports
 #
-#     - name: Run Semgrep Scan
-#       run: |
-#         semgrep scan \
-#           --config "p/java" \
-#           --config "p/secrets" \
-#           --config "p/owasp-top-ten" \
-#           --sarif \
-#           --output reports/semgrep-results.sarif || true
+#             - name: Run Semgrep Scan
+#               run: |
+#                 semgrep scan \
+#                   --config "p/java" \
+#                   --config "p/secrets" \
+#                   --config "p/owasp-top-ten" \
+#                   --output reports/semgrep-results.sarif \
+#                   --sarif || true
 #
-#     - name: Save reports
-#       uses: github/codeql-action/upload-sarif@v4
-#       with:
-#         name: reports-semgrep
-#         sarif_file: reports/semgrep-results.sarif
-#         retention-days: 14
+#             - name: Save SARIF
+#               uses: github/codeql-action/upload-sarif@v4
+#               with:
+#                 sarif_file: reports/semgrep-results.sarif
+#
+#             - name: Save results
+#               uses: actions/upload-artifact@v4
+#               with:
+#                 name: semgrep-results
+#                 path: reports/semgrep-results.sarif
+#                 retention-days: 14
+#
+#    sca_task:
+#             name: SCA Task
+#             needs: build
+#             runs-on: ubuntu-latest
+#             container: eclipse-temurin:21-jdk
+#             steps:
+#             - name: Clone repository
+#               uses: actions/checkout@v4
+#        
+#             - name: Make directory
+#               run: mkdir -p reports
+#
+#             - name: Grant permissions to mvnw script
+#               run: chmod +x ./mvnw
+#
+#             - name: Run OWASP Dependency-Check
+#               run: |
+#                 ./mvnw org.owasp:dependency-check-maven:check \
+#                 -Dformat=HTML \
+#                 -DoutputDirectory=reports \
+#                 -DsuppressionFile=suppressions.xml || true
+#
+#             - name: Save reports
+#               uses: actions/upload-artifact@v4
+#               with:
+#                 name: reports-owasp
+#                 path: target/dependency-check-report.html
+#                 retention-days: 14
 
-#   dependency_check:
-#     name: SCA Analysis
-#     needs: build
-#     runs-on: ubuntu-latest
-#     container:
-#       image: maven:3.9-eclipse-temurin-21
-#     steps:
-#     - uses: actions/checkout@v4
-#     - run: mkdir -p reports
-#     - run: chmod +x ./mvnw
-#     - name: Run OWASP Dependency-Check
-#       run: |
-#         mvn org.owasp:dependency-check-maven:check \
-#         -Dformat=HTML \
-#         -DoutputDirectory=reports \
-#         -DsuppressionFile=suppressions.xml || true
-#     - name: Save reports
-#       uses: actions/upload-artifact@v4
-#       with:
-#         name: reports-owasp
-#         path: target/dependency-check-report.html
-#         retention-days: 14
-
-  dast-base-scan:
-    name: DAST Base Analysis
-    needs: build
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/zaproxy/zaproxy:latest
-      options: --user root
+    zap-baseline_scan:
+        name: ZAP Baseline task
+        needs: build
+        runs-on: ubuntu-latest
+        container:
+          image: ghcr.io/zaproxy/zaproxy:latest
+          options: --user root
+        
+        steps:
+        - name: Clone repository
+          uses: actions/checkout@v4
     
-    steps:
-    - name: Clone repository
-      uses: actions/checkout@v4
+        - name: Install Java
+          uses: actions/setup-java@v4
+          with:
+              java-version: '21'
+              distribution: 'temurin'
 
-    - name: Install Java 21
-      run: |
-        apt-get update
-        apt-get install -y wget
-        cd /opt
-        wget https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz
-        tar -xzf openjdk-21.0.2_linux-x64_bin.tar.gz
-        export JAVA_HOME=/opt/jdk-21.0.2
-        export PATH=$JAVA_HOME/bin:$PATH
-        java -version
+        - name: Prepare ZAP Environment
+          run: |
+              sudo mkdir -p /zap/wrk
+              sudo chown -R $USER:$USER /zap
+              sudo chmod -R 755 /zap
+    
+        - name: Download app
+          uses: actions/download-artifact@v4
+          with:
+            name: rbpo_1
+            path: target/
 
-    - name: Download app
-      uses: actions/download-artifact@v4
-      with:
-        name: java-app
+        - name: Run application
+          run: java -jar ./target/rbpo_1-0.0.1-SNAPSHOT.jar &
+      
+        - name: Wait for application to start
+          run: sleep 30
+    
+        - name: ZAP baseline scan
+          run: zap-baseline.py -t http://localhost:8080 -r report_site.html || true
 
-    - name: Make Directory
-    - run: mkdir -p /zap/wrk/
-
-    - name: Zap baseline scan
-    - run: /opt/jdk-21.0.2/bin/java -jar ./rpbo_1-0.0.1-SNAPSHOT.jar & sleep 30
-    - run: zap-baseline.py -t http://localhost:8080 -r report_site.html || true
-    - run: cp /zap/wrk/report_site.html report_site.html
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: zap-base-report
-        path: ./report_site.html
-        retention-days: 14
+        - name: ZAP reports
+          run: cp /zap/wrk/report_site.html report_site.html
+    
+        - name: Upload artifacts
+          uses: actions/upload-artifact@v4
+          with:
+            name: zap-baseline-report
+            path: ./report_site.html
+            retention-days: 14
 
 
-  dast-api-scan:
-    name: DAST API Analysis
-    needs: build
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/zaproxy/zaproxy:latest
-      options: --user root
+    zap-api_scan:
+        name: ZAP API Analysis
+        needs: build
+        runs-on: ubuntu-latest
+        container:
+          image: ghcr.io/zaproxy/zaproxy:latest
+          options: --user root
+    
+        steps:
+        - name: Clone repository
+          uses: actions/checkout@v4
+    
+        - name: Install Java
+          uses: actions/setup-java@v4
+          with:
+              java-version: '21'
+              distribution: 'temurin'
+    
+        - name: Prepare ZAP Environment
+          run: |
+              sudo mkdir -p /zap/wrk
+              sudo chown -R $USER:$USER /zap
+              sudo chmod -R 755 /zap
+    
+        - name: Download app
+          uses: actions/download-artifact@v4
+          with:
+            name: rbpo_1
+            path: target/
 
-    steps:
-    - name: Clone repository
-      uses: actions/checkout@v4
+        - name: Run application
+          run: java -jar ./target/rbpo_1-0.0.1-SNAPSHOT.jar &
+      
+        - name: Wait for application to start
+          run: sleep 30
+    
+        - name: ZAP-api scan
+          run: zap-api-scan.py -t http://localhost:8080 -f openapi -r report_site.html || true
 
-    - name: Install Java 21
-      run: |
-        apt-get update
-        apt-get install -y wget
-        cd /opt
-        wget https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz
-        tar -xzf openjdk-21.0.2_linux-x64_bin.tar.gz
-        export JAVA_HOME=/opt/jdk-21.0.2
-        export PATH=$JAVA_HOME/bin:$PATH
-        java -version
-
-    - name: Download app
-      uses: actions/download-artifact@v4
-      with:
-        name: java-app
-
-    - name: Make directory
-      run: mkdir -p /zap/wrk/
-
-    - name: Zap-api scan
-    - run: /opt/jdk-21.0.2/bin/java -jar ./rpbo_1-0.0.1-0.0.1-SNAPSHOT.jar & sleep 30
-    - run: zap-api-scan.py -t http://localhost:8080 -f openapi -r report_site.html || true
-    - run: cp /zap/wrk/report_site.html report_site.html
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: zap-api-report
-        path: ./report_site.html
-        retention-days: 14
+        - name: ZAP reports
+          run: cp /zap/wrk/report_site.html report_site.html
+    
+        - name: Upload artifacts
+          uses: actions/upload-artifact@v4
+          with:
+            name: zap-api-report
+            path: ./report_site.html
+            retention-days: 14
