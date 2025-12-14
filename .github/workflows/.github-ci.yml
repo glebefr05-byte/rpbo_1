@@ -1,0 +1,89 @@
+on:
+    pull_request:
+        types:    [opened, synchronize]
+        branches: [ main ]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        container: eclipse-temurin:21-jdk
+
+        steps:
+            - name: Clone repository
+              uses: actions/checkout@v4
+
+            - name: Grant permissions to mvnw script
+              run: chmod u+x ./mvnw
+
+            - name: Run mvnw script
+              run: ./mvnw package
+
+            - name: Save artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                 name: rbpo_1
+                 path: ./target/*.jar
+
+    sast-task:
+             name: SAST task
+             needs: build
+             runs-on: ubuntu-latest
+             container:
+               image: returntocorp/semgrep:latest
+    
+             steps:
+             - name: Clone repository
+               uses: actions/checkout@v4
+          
+             - name: Make directory
+               run: mkdir -p reports
+
+             - name: Run Semgrep Scan
+               run: |
+                 semgrep scan \
+                   --config "p/java" \
+                   --config "p/secrets" \
+                   --config "p/owasp-top-ten" \
+                   --output reports/semgrep-results.sarif \
+                   --sarif || true
+
+             - name: Save SARIF
+               uses: github/codeql-action/upload-sarif@v4
+               with:
+                 sarif_file: reports/semgrep-results.sarif
+
+             - name: Save results
+               uses: actions/upload-artifact@v4
+               with:
+                 name: semgrep-results
+                 path: reports/semgrep-results.sarif
+                 retention-days: 14
+
+    sca_task:
+             name: SCA Task
+             needs: build
+             runs-on: ubuntu-latest
+             container: eclipse-temurin:21-jdk
+             steps:
+             - name: Clone repository
+               uses: actions/checkout@v4
+        
+             - name: Make directory
+               run: mkdir -p reports
+
+             - name: Grant permissions to mvnw script
+               run: chmod +x ./mvnw
+
+             - name: Run OWASP Dependency-Check
+               run: |
+                 ./mvnw org.owasp:dependency-check-maven:check \
+                 -Dformat=HTML \
+                 -DoutputDirectory=reports \
+                 -DsuppressionFile=suppressions.xml || true
+
+             - name: Save reports
+               uses: actions/upload-artifact@v4
+               with:
+                 name: reports-owasp
+                 path: target/dependency-check-report.html
+                 retention-days: 14
