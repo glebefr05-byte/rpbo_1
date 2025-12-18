@@ -131,7 +131,7 @@ jobs:
               rules_file_name: 'zap_rules.tsv'
               allow_issue_writing: false
               fail_action: false
-              artifact_name: ''
+              artifact_name: zaprep
     
         - name: Upload ZAP Results
           if: always()
