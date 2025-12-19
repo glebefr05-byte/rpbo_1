@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.8</version>
+        <version>3.5.4</version>
         <relativePath/>
     </parent>
 
@@ -17,7 +17,6 @@
 
     <properties>
         <java.version>21</java.version>
-	<tomcat.version>10.1.47</tomcat.version>
     </properties>
 
     <dependencies>
@@ -48,9 +47,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.dom4j</groupId>
+            <groupId>dom4j</groupId>
             <artifactId>dom4j</artifactId>
-            <version>2.2.0</version>
+            <version>1.6.1</version>
         </dependency>
 
         <dependency>
@@ -63,11 +62,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
-        </dependency>
-
-	<dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
     </dependencies>
@@ -99,11 +93,6 @@
                         </exclude>
                     </excludes>
                 </configuration>
-            </plugin>
-	    <plugin>
-                <groupId>org.owasp</groupId>
-                <artifactId>dependency-check-maven</artifactId>
-                <version>12.1.9</version>
             </plugin>
         </plugins>
     </build>
