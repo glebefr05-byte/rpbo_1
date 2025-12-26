@@ -1,5 +1,6 @@
 package ru.mtuci.coursemanagement.controller;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AuthController {
     private final UserService users;
+    private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/login")
     public String loginPage() {
@@ -54,9 +56,9 @@ public class AuthController {
 
     @PostMapping("/register")
     public String register(@RequestParam String username,
-                           @RequestParam String password,
-                           @RequestParam(required = false, defaultValue = "STUDENT") String role) {
-        users.save(new User(null, username, password, role));
+                           @RequestParam String password) {
+        String encoded = passwordEncoder.encode(password);
+        users.save(new User(null, username, encoded, "STUDENT"));
         return "redirect:/login";
     }
 }
