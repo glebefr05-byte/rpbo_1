@@ -4,6 +4,8 @@ INSERT INTO USERS (id, username, password, role)
 VALUES (1, 'teacher', 'password', 'TEACHER');
 INSERT INTO USERS (id, username, password, role)
 VALUES (2, 'student', 'password', 'STUDENT');
+INSERT INTO USERS (id, username, password, role)
+VALUES (3, 'admin', 'password', 'ADMIN');
 ALTER TABLE USERS ALTER COLUMN ID RESTART WITH 3;
 
 -- Студенты
